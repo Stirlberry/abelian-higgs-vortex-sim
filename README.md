@@ -32,7 +32,7 @@ pip install numpy matplotlib
 ## Running
 
 ```bash
-python vortex_sim_v4-15.py
+python vortex_sim_v4-16.py
 ```
 
 ---
@@ -73,6 +73,7 @@ Give vortices an initial velocity kick (CW or CCW) and a continuous phase rotati
 Each item is individually toggleable with zero compute cost when off:
 - Placement count
 - Topological charge ∫q dA (true winding number, measured live)
+- Regime indicator — κ = √(2λ)/g_W and Type I/II label (updates live as λ slider moves)
 - λ, sin²θ_W, e_W
 - Mode / pause status
 
@@ -95,6 +96,7 @@ Each item is individually toggleable with zero compute cost when off:
 
 | Version | Key changes |
 |---|---|
+| v4.16 | Type I/II regime indicator (κ readout), λ slider extended to [0.005, 0.30] |
 | v4.15 | Soft edge boundary (smoothstep fade, zero physics impact) |
 | v4.15b | Clip path boundary (vector circle + soft edge combined) |
 | v4.14 | Toggleable info overlay, topo charge on/off, UNDO button removed |
@@ -112,6 +114,7 @@ Each item is individually toggleable with zero compute cost when off:
 - **Topological charge**: ∫q dA = ∫(∂ₓn̂ × ∂_yn̂)/2π dA, integrated over the active field; always rounds to an integer
 - **PML**: cubic ramp absorbing layer from r=0.36N to r=0.48N suppresses boundary reflections
 - **Vortex core size** scales as ξ ∝ 1/√(2λ); at λ=0.13, ξ ≈ 2 grid cells
+- **Ginzburg-Landau parameter** κ = √(2λ)/g_W; Type I κ < 1/√2, Type II κ > 1/√2; crossover at λ ≈ 0.0225
 
 ---
 
