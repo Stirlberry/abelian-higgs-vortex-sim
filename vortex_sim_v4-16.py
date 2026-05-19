@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 """
-Abelian-Higgs Vortex Simulation  —  Claude Code edition  v4.15
+Abelian-Higgs Vortex Simulation  —  Claude Code edition  v4.16
 ===============================================================
-Changes vs v4.15:
-  - Soft edge mask: smoothstep fade replaces hard binary in_circle cut in to_rgb().
-    Zero physics impact — field arrays and integrator unchanged.
+Changes vs v4.16:
+  - Type I / II regime indicator: κ = √(2λ)/g_W displayed live in info overlay
+  - λ slider extended to [0.005, 0.30] with dashed I|II crossover marker at λ≈0.0225
+  - Info: regime (κ, Type I/II) toggle added to View menu
 
 Changes vs v4.13:
   - Topological charge integrator: ∫q dA displayed live in info bar (placed vs measured)
@@ -66,6 +67,13 @@ G_Z        = G_W / COS_TW          # 0.342
 E_W        = G_W * SIN_TW          # 0.144
 SPIN_SCALE = SIN_TW * 0.00125      # A₀ source coupling
 
+# ─── Type I / II crossover ────────────────────────────────────────────────────
+# κ = √(2λ)/g_W  (Ginzburg-Landau parameter)
+# κ < 1/√2 → Type I (vortices attract)   κ > 1/√2 → Type II (vortices repel)
+# Crossover: λ_cross = g_W² / 4
+_LAMBDA_CROSS = G_W ** 2 / 4          # ≈ 0.0225 with G_W=0.30
+_KAPPA_BOUND  = 1.0 / np.sqrt(2)      # ≈ 0.7071
+
 # ─── Grid ─────────────────────────────────────────────────────────────────────
 # N=256: each np.roll Laplacian ≈ 0.5–1 ms → speed slider spans 1–16 steps/frame
 N   = 256
@@ -124,6 +132,7 @@ S = dict(
     topo_q        = 0,         # measured winding number ∫q dA
     show_placed   = False,
     show_topo_q   = False,
+    show_regime   = False,
     show_lam      = False,
     show_sin2tw   = False,
     show_ew       = False,
@@ -438,7 +447,7 @@ def to_rgb():
 # ─── Figure ───────────────────────────────────────────────────────────────────
 fig = plt.figure(figsize=(13, 8), facecolor='#080808')
 try:
-    fig.canvas.manager.set_window_title('Abelian-Higgs Vortex Simulation  v4.15')
+    fig.canvas.manager.set_window_title('Abelian-Higgs Vortex Simulation  v4.16')
 except Exception:
     pass
 
@@ -471,6 +480,10 @@ def refresh_info():
     parts = []
     if S['show_placed']:  parts.append(f"placed: {S['nv']}")
     if S['show_topo_q']:  parts.append(f"∫q={S['topo_q']:+d}")
+    if S['show_regime']:
+        kappa  = np.sqrt(2.0 * S['lam']) / G_W
+        regime = 'I' if kappa < _KAPPA_BOUND else 'II'
+        parts.append(f"κ={kappa:.3f}  Type {regime}")
     if S['show_lam']:     parts.append(f"λ={S['lam']:.3f}")
     if S['show_sin2tw']:  parts.append(f"sin²θW={SIN2_TW:.5f}")
     if S['show_ew']:      parts.append(f"eW={E_W:.3f}")
@@ -572,7 +585,15 @@ def mk_slider(y, label, lo, hi, init, step=None, col='#404050'):
 
 sl_rate  = mk_slider(0.665, 'spin rate', 1,     8,     3,          step=1)
 sl_count = mk_slider(0.607, 'count',     2,    10,     6,          step=1)
-sl_lam   = mk_slider(0.549, 'λ',         0.03,  0.25,  LAMBDA_PDG, step=0.01,  col='#303048')
+sl_lam   = mk_slider(0.549, 'λ',         0.005, 0.30,  LAMBDA_PDG, step=0.005, col='#303048')
+
+# Mark the Type I / II crossover on the λ slider
+_lam_lo, _lam_hi = 0.005, 0.30
+_cross_x = (_LAMBDA_CROSS - _lam_lo) / (_lam_hi - _lam_lo)
+sl_lam.ax.axvline(_cross_x, color='#888844', lw=1.0, ls='--', alpha=0.8)
+sl_lam.ax.text(_cross_x + 0.02, 0.85, 'I|II', color='#888844',
+               fontsize=6, fontfamily='monospace', va='top',
+               transform=sl_lam.ax.transAxes)
 sl_spf   = mk_slider(0.491, 'speed',     1,    16,     3,          step=1)
 sl_damp  = mk_slider(0.433, 'damp',      0.990, 1.000, 0.999,      step=0.001, col='#302030')
 
@@ -741,12 +762,13 @@ try:
 
     # Info overlay — each item individually toggleable, all off by default
     for label, key in [
-        ('Info: placement count',  'show_placed'),
-        ('Info: topo charge (∫q)', 'show_topo_q'),
-        ('Info: λ',                'show_lam'),
-        ('Info: sin²θW',           'show_sin2tw'),
-        ('Info: eW',               'show_ew'),
-        ('Info: mode / pause',     'show_status'),
+        ('Info: placement count',      'show_placed'),
+        ('Info: topo charge (∫q)',     'show_topo_q'),
+        ('Info: regime (κ, Type I/II)','show_regime'),
+        ('Info: λ',                    'show_lam'),
+        ('Info: sin²θW',               'show_sin2tw'),
+        ('Info: eW',                   'show_ew'),
+        ('Info: mode / pause',         'show_status'),
     ]:
         act = QAction(label, win)
         act.setCheckable(True)
@@ -766,7 +788,7 @@ try:
 except Exception as e:
     print(f"View menu unavailable ({e})")
 
-print("Abelian-Higgs Vortex Simulation v4.15 (PDG 2025 constants)")
+print("Abelian-Higgs Vortex Simulation v4.16 (PDG 2025 constants)")
 print(f"PDG 2025: λ={LAMBDA_PDG}  sin²θW={SIN2_TW}  gZ={G_Z:.3f}  eW={E_W:.3f}")
 print(f"Grid {N}×{N}  active radius {R_ACTIVE}  steps/frame 1–16")
 print()
