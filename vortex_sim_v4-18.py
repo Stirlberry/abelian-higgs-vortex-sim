@@ -984,7 +984,7 @@ set_view('phase')
 _aw = 0.365;  _ah = 0.052;  _hw = (_aw - 0.005) / 2   # half-width for side-by-side pair
 b_pause   = mkbtn([_sx,               0.237, _hw, _ah], 'PAUSE')
 b_clear   = mkbtn([_sx + _hw + 0.005, 0.237, _hw, _ah], 'CLEAR')
-b_reflect = mkbtn([_sx,               0.175, _hw, _ah], 'REFLECT: OFF', 8)
+b_reflect = mkbtn([_sx,               0.175, _hw, _ah], 'REFLECT: OFF')
 b_quit    = mkbtn([_sx + _hw + 0.005, 0.175, _hw, _ah], 'QUIT')
 
 def on_pause(e=None):
