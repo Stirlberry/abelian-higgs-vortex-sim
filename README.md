@@ -32,7 +32,7 @@ pip install numpy matplotlib
 ## Running
 
 ```bash
-python vortex_sim_v4-16.py
+python vortex_sim_v4-17a.py
 ```
 
 ---
@@ -41,10 +41,13 @@ python vortex_sim_v4-16.py
 
 | Action | Control |
 |---|---|
-| Place vortex | Click in simulation area |
+| Place vortex (+1) | Left-click in simulation area |
+| Place antivortex (−1) | Right-click anywhere in simulation area |
 | Undo placement | Ctrl+Z |
 | Pause / Resume | Space or PAUSE button |
 | Reset field | R or CLEAR button |
+| Save state | File menu → Save state… (Ctrl+S) |
+| Load state | File menu → Load state… (Ctrl+O) |
 | Quit | Q / Escape / QUIT button |
 
 ---
@@ -86,6 +89,9 @@ Each item is individually toggleable with zero compute cost when off:
 | spin rate | Angular velocity of spin sources |
 | count | Number of vortices in string / ring patterns |
 
+### Save / load state (File menu)
+Save the full field state (φ, φ', λ, spin sources) to a `.npz` file and reload it in any future session. The λ slider resyncs automatically on load.
+
 ### Boundary modes
 - **Absorbing (default)** — PML (Perfectly Matched Layer) damps outgoing radiation
 - **Reflective** — hard circular wall; vortices bounce back
@@ -96,6 +102,8 @@ Each item is individually toggleable with zero compute cost when off:
 
 | Version | Key changes |
 |---|---|
+| v4.17a | Save/load state (File menu), right-click antivortex, energy flicker fix, physics time budget |
+| v4.17 | Performance pass: pre-allocated scratch arrays, slicing Laplacian, 30 ms interval, smooth interpolation default |
 | v4.16 | Type I/II regime indicator (κ readout), λ slider extended to [0.005, 0.30] |
 | v4.15 | Soft edge boundary (smoothstep fade, zero physics impact) |
 | v4.15b | Clip path boundary (vector circle + soft edge combined) |
@@ -110,7 +118,7 @@ Each item is individually toggleable with zero compute cost when off:
 ## Physics notes
 
 - **Integrator**: damped leapfrog — preserves vacuum exactly; `damp=1.000` gives Hamiltonian dynamics
-- **Laplacian**: 5-point stencil via `numpy.roll` (no scipy dependency)
+- **Laplacian**: 5-point stencil via slice views (no scipy, no array copies on interior)
 - **Topological charge**: ∫q dA = ∫(∂ₓn̂ × ∂_yn̂)/2π dA, integrated over the active field; always rounds to an integer
 - **PML**: cubic ramp absorbing layer from r=0.36N to r=0.48N suppresses boundary reflections
 - **Vortex core size** scales as ξ ∝ 1/√(2λ); at λ=0.13, ξ ≈ 2 grid cells
