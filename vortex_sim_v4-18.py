@@ -2,7 +2,7 @@
 """
 Abelian-Higgs Vortex Simulation  —  Claude Code edition  v4.18
 ===============================================================
-Changes vs v4.17b (this version — spatial gauge field):
+Changes vs v4.17b (this version — spatial gauge field + thermal noise):
   - Spatial U(1) gauge field Ax, Ay added (full Abelian-Higgs, not just global U(1))
   - Scalar field EOM now uses covariant Laplacian D²φ = ∇²φ − 2ie A·∇φ − e²|A|²φ
   - Gauge field evolved via leapfrog: ∂_t²Ax = −∂_y B + Jx, ∂_t²Ay = +∂_x B + Jy
@@ -13,6 +13,10 @@ Changes vs v4.17b (this version — spatial gauge field):
   - Energy display updated: ½B² magnetic contribution added
   - Undo / save / load extended to include Ax, Ay, AxP, AyP
   - 9 new pre-allocated scratch arrays for gauge step (≈ 2.4 MB)
+  - Langevin thermal noise: Gaussian kick σ = √(2(1−d)T) per step, active-circle only
+  - Fluctuation-dissipation: noise amplitude ∝ √((1−damp)·T); damp=1 → zero noise
+  - Temperature slider T ∈ [0, 0.20]; BKT transition visible as free vortex proliferation
+    (at the PDG λ, expect spontaneous pairs above T ≈ 0.05–0.15 for damp = 0.999)
 
 Changes vs v4.17a (v4.17b — cleanup & performance):
   - Removed unused bare 'import matplotlib' and stale docstring text
@@ -144,6 +148,7 @@ del _s
 
 in_circle = R_GRID <= N // 2 - 1
 wall_mask = R_GRID >= N // 2 - 2
+_N_IN_CIRCLE = int(in_circle.sum())   # precomputed — avoids sum() every step for Langevin
 
 # Smoothstep fade over the outermost 3 pixels — purely cosmetic, physics unchanged
 _t         = np.clip((N // 2 - 2 - R_GRID) / 3.0, 0.0, 1.0)
@@ -229,6 +234,7 @@ S = dict(
     spf      = 3,
     reflect  = False,
     damp     = 0.999,
+    temp     = 0.0,
     mode          = 'phase',   # 'phase' | 'energy' | 'topo'
     nv            = 0,
     topo_q        = 0,         # measured winding number ∫q dA
@@ -374,6 +380,13 @@ def step():
     p1P[:] = p1;  p2P[:] = p2
     p1[:] = _step_n1;  p2[:] = _step_n2
     # _step_n1, _step_n2, _step_v1, _step_v2, _step_pot, _step_Anx, _step_Any now free
+
+    # ── Langevin thermal noise — FDT: σ = √(2(1−d)T), active circle only ─────
+    # At damp=1.000 (Hamiltonian), 1−d=0, so σ=0 → no noise regardless of T.
+    if S['temp'] > 0.0:
+        _sigma = float(np.sqrt(2.0 * (1.0 - S['damp']) * S['temp']))
+        p1[in_circle] += (_sigma * np.random.randn(_N_IN_CIRCLE)).astype(np.float32)
+        p2[in_circle] += (_sigma * np.random.randn(_N_IN_CIRCLE)).astype(np.float32)
 
     # ── Continuous phase rotation ─────────────────────────────────────────────
     if spin_sources:
@@ -932,21 +945,23 @@ sl_lam.ax.text(_cross_frac + 0.02, 0.85, 'I|II', color='#888844',
                transform=sl_lam.ax.transAxes)
 sl_spf   = mk_slider(0.491, 'speed',     1,    16,     3,          step=1)
 sl_damp  = mk_slider(0.433, 'damp',      0.990, 1.000, 0.999,      step=0.001, col='#302030')
+sl_temp  = mk_slider(0.375, 'T',         0.00,  0.20,  0.0,        step=0.005, col='#302828')
 
 sl_rate.on_changed( lambda v: S.update(spin_rate=int(v)))
 sl_count.on_changed(lambda v: S.update(count=int(v)))
 sl_lam.on_changed(  lambda v: [S.update(lam=float(v)), refresh_info()])
 sl_spf.on_changed(  lambda v: S.update(spf=int(v)))
 sl_damp.on_changed( lambda v: S.update(damp=float(v)))
+sl_temp.on_changed( lambda v: S.update(temp=float(v)))
 
 # ── View mode buttons ─────────────────────────────────────────────────────────
-ax_vlbl = fig.add_axes([0.625, 0.401, 0.365, 0.024], facecolor='#080808')
+ax_vlbl = fig.add_axes([0.625, 0.336, 0.365, 0.024], facecolor='#080808')
 ax_vlbl.text(0.03, 0.5, 'VIEW', va='center', color='#444', fontsize=8, fontfamily='monospace')
 ax_vlbl.axis('off')
 _vw = 0.111
-b_vphase  = mkbtn([_bx0+0*(_vw+0.005), 0.364, _vw, 0.032], 'phase',  8)
-b_venergy = mkbtn([_bx0+1*(_vw+0.005), 0.364, _vw, 0.032], 'energy', 8)
-b_vtopo   = mkbtn([_bx0+2*(_vw+0.005), 0.364, _vw, 0.032], 'topo',   8)
+b_vphase  = mkbtn([_bx0+0*(_vw+0.005), 0.299, _vw, 0.032], 'phase',  8)
+b_venergy = mkbtn([_bx0+1*(_vw+0.005), 0.299, _vw, 0.032], 'energy', 8)
+b_vtopo   = mkbtn([_bx0+2*(_vw+0.005), 0.299, _vw, 0.032], 'topo',   8)
 VIEW_BTNS    = {'phase': b_vphase, 'energy': b_venergy, 'topo': b_vtopo}
 VIEW_ACTIONS = {}   # populated by Qt menu setup; keeps panel buttons in sync
 
@@ -967,10 +982,10 @@ set_view('phase')
 
 # ── Action buttons ────────────────────────────────────────────────────────────
 _aw = 0.365;  _ah = 0.052
-b_pause   = mkbtn([_sx, 0.302, _aw, _ah], 'PAUSE')
-b_clear   = mkbtn([_sx, 0.240, _aw, _ah], 'CLEAR')
-b_reflect = mkbtn([_sx, 0.178, _aw, _ah], 'REFLECT: OFF', 8)
-b_quit    = mkbtn([_sx, 0.116, _aw, _ah], 'QUIT')
+b_pause   = mkbtn([_sx, 0.237, _aw, _ah], 'PAUSE')
+b_clear   = mkbtn([_sx, 0.175, _aw, _ah], 'CLEAR')
+b_reflect = mkbtn([_sx, 0.113, _aw, _ah], 'REFLECT: OFF', 8)
+b_quit    = mkbtn([_sx, 0.051, _aw, _ah], 'QUIT')
 
 def on_pause(e=None):
     S['paused'] = not S['paused']
@@ -990,15 +1005,15 @@ b_reflect.on_clicked(on_reflect)
 b_quit.on_clicked(   lambda e: (plt.close('all'), sys.exit(0)))
 
 # Legend
-ax_leg = fig.add_axes([_sx, 0.035, _aw, 0.073], facecolor='#080808')
+ax_leg = fig.add_axes([_sx, 0.000, _aw, 0.045], facecolor='#080808')
 for k, (txt, col) in enumerate([
     ('■ blue = ↺ CCW   ■ orange = ↻ CW', '#557799'),
     ('phase: colour=arg φ  dark=|φ|→0',  '#555'),
     ('energy: black→red→yellow→white',    '#555'),
     ('topo: blue=+1 vortex  red=−1',      '#555'),
 ]):
-    ax_leg.text(0.04, 0.88 - k*0.27, txt, color=col,
-                fontsize=7, fontfamily='monospace', va='top')
+    ax_leg.text(0.04, 0.94 - k*0.28, txt, color=col,
+                fontsize=6, fontfamily='monospace', va='top')
 ax_leg.axis('off')
 
 def eg(event):
