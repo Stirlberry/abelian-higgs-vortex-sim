@@ -32,7 +32,7 @@ pip install numpy matplotlib
 ## Running
 
 ```bash
-python vortex_sim_v4-17a.py
+python vortex_sim_v4-17b.py
 ```
 
 ---
@@ -102,6 +102,7 @@ Save the full field state (φ, φ', λ, spin sources) to a `.npz` file and reloa
 
 | Version | Key changes |
 |---|---|
+| v4.17b | Cleanup pass: step() scratch pre-allocated (~1.5 MB/call freed), slice-based energy/topo gradients, module constants, del build-time arrays; slider circle-flash fix (removed static Circle patch); vortex core markers clamped to full-brightness zone (R < 123); Type I/II crossover marker corrected to λ = 0.0225 |
 | v4.17a | Save/load state (File menu), right-click antivortex, energy flicker fix, physics time budget |
 | v4.17 | Performance pass: pre-allocated scratch arrays, slicing Laplacian, 30 ms interval, smooth interpolation default |
 | v4.16 | Type I/II regime indicator (κ readout), λ slider extended to [0.005, 0.30] |
@@ -111,7 +112,7 @@ Save the full field state (φ, φ', λ, spin sources) to a `.npz` file and reloa
 | v4.13 | View menu (Qt), vortex core markers, phase gradient arrows, smooth interpolation |
 | v4.12 | PDG 2025 constants (sin²θ_W = 0.23122), dynamic info bar |
 | v4.11 | Display mode toggle (phase / energy / topo) |
-| v4.2 | Damping slider, 5-point numpy-roll Laplacian |
+| v4.2 | Damping slider, 5-point Laplacian |
 
 ---
 
