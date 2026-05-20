@@ -32,7 +32,7 @@ pip install numpy matplotlib
 ## Running
 
 ```bash
-python vortex_sim_v4-17b.py
+python vortex_sim_v4-18.py
 ```
 
 ---
@@ -102,6 +102,7 @@ Save the full field state (φ, φ', λ, spin sources) to a `.npz` file and reloa
 
 | Version | Key changes |
 |---|---|
+| v4.18 | Spatial U(1) gauge field Ax, Ay: full covariant Abelian-Higgs dynamics. Each vortex carries quantised magnetic flux Φ = 2π/e_W initialised via London profile. Gauge field leapfrog with PML. Energy display includes ½B² magnetic contribution. Undo/save/load extended to include gauge arrays. |
 | v4.17b | Cleanup pass: step() scratch pre-allocated (~1.5 MB/call freed), slice-based energy/topo gradients, module constants, del build-time arrays; slider circle-flash fix (removed static Circle patch); vortex core markers clamped to full-brightness zone (R < 123); Type I/II crossover marker corrected to λ = 0.0225 |
 | v4.17a | Save/load state (File menu), right-click antivortex, energy flicker fix, physics time budget |
 | v4.17 | Performance pass: pre-allocated scratch arrays, slicing Laplacian, 30 ms interval, smooth interpolation default |
