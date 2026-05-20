@@ -1012,16 +1012,16 @@ _leg_left = [
     ('topo: +1=blue  −1=red',   '#555'),
 ]
 _leg_right = [
-    ('cores: blue=↺  orange=↻', '#557799'),
-    ('T: Langevin noise (BKT)', '#554433'),
-    ('spc=pause  R=reset  ^Z',  '#444'),
+    ('cores: blue=↺  orange=↻',  '#557799'),
+    ('T: Langevin noise (BKT)',   '#554433'),
+    ('spc=pause  R=reset  ^Z=undo', '#444'),
 ]
 for k, (txt, col) in enumerate(_leg_left):
-    ax_leg.text(0.04, 0.85 - k*0.34, txt, color=col,
-                fontsize=7, fontfamily='monospace', va='top')
+    ax_leg.text(0.04, 0.88 - k*0.28, txt, color=col,
+                fontsize=8, fontfamily='monospace', va='top')
 for k, (txt, col) in enumerate(_leg_right):
-    ax_leg.text(0.52, 0.85 - k*0.34, txt, color=col,
-                fontsize=7, fontfamily='monospace', va='top')
+    ax_leg.text(0.52, 0.88 - k*0.28, txt, color=col,
+                fontsize=8, fontfamily='monospace', va='top')
 ax_leg.axis('off')
 
 def eg(event):
