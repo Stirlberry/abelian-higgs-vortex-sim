@@ -1004,17 +1004,23 @@ b_clear.on_clicked(  lambda e: do_reset())
 b_reflect.on_clicked(on_reflect)
 b_quit.on_clicked(   lambda e: (plt.close('all'), sys.exit(0)))
 
-# Legend
+# Legend — two columns, 3 rows each
 ax_leg = fig.add_axes([_sx, 0.000, _aw, 0.169], facecolor='#080808')
-for k, (txt, col) in enumerate([
-    ('■ blue = ↺ CCW   ■ orange = ↻ CW', '#557799'),
-    ('phase: colour=arg φ  dark=|φ|→0',  '#555'),
-    ('energy: ½|∇φ|²+λ(|φ|²−1)²+½B²',   '#555'),
-    ('topo: blue=+1 vortex  red=−1',      '#555'),
-    ('T slider: thermal noise (BKT)',      '#554433'),
-    ('space=pause  R=reset  ctrl+Z=undo', '#444'),
-]):
-    ax_leg.text(0.04, 0.93 - k*0.17, txt, color=col,
+_leg_left = [
+    ('phase: colour = arg φ',   '#555'),
+    ('energy: |∇φ|²+V(φ)+½B²', '#555'),
+    ('topo: +1=blue  −1=red',   '#555'),
+]
+_leg_right = [
+    ('cores: blue=↺  orange=↻', '#557799'),
+    ('T: Langevin noise (BKT)', '#554433'),
+    ('spc=pause  R=reset  ^Z',  '#444'),
+]
+for k, (txt, col) in enumerate(_leg_left):
+    ax_leg.text(0.04, 0.85 - k*0.34, txt, color=col,
+                fontsize=7, fontfamily='monospace', va='top')
+for k, (txt, col) in enumerate(_leg_right):
+    ax_leg.text(0.52, 0.85 - k*0.34, txt, color=col,
                 fontsize=7, fontfamily='monospace', va='top')
 ax_leg.axis('off')
 
